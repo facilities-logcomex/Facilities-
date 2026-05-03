@@ -405,6 +405,8 @@ const GH_OWNER   = 'facilities-logcomex';
 const GH_REPO    = 'Facilities-';
 const GH_FILE    = 'eventos.json';
 let fixedEventsRaw = [];
+let fixedEvents = [];
+let calEvents = [];
 
 function getGHToken(){
   return localStorage.getItem('gh_token_facilities');
@@ -661,69 +663,6 @@ function generateRecurring(){
   });
   return evts;
 }
-
-// Eventos fixos (agendamentos, lembretes, preventivas, etc.)
-// Regra: se cair em sáb → mover para sex; se cair em dom → mover para seg
-const fixedEventsRaw=[
-  // MAIO — lembretes de agendar junho (dia 15 = sex, ok)
-
-  {y:2026,m:4,d:15,name:'LEMBRETE — Agendar VRF jun',sup:'VRF Engenharia',cls:'evt-amber',status:'s-soon',statusLabel:'Agendar',note:'Agendar preventiva AC para junho — data a combinar',email:{sub:'[Facilities] Agendar — Preventiva AC VRF — Jun/2026',body:'Olá,\n\nLembrete: agendar preventiva AC para junho/2026.\n\nFavor confirmar data.\n\nAtenciosamente,\nFacilities Logcomex'}},
-  {y:2026,m:4,d:15,name:'LEMBRETE — Agendar JB limpeza',sup:'JB Facility — Limpeza',cls:'evt-amber',status:'s-soon',statusLabel:'Agendar',note:'Agendar limpeza pesada para junho — data a combinar',email:{sub:'[Facilities] Agendar — Limpeza Pesada JB — Jun/2026',body:'Olá Bruno,\n\nLembrete: agendar limpeza pesada para junho/2026.\n\nAtenciosamente,\nFacilities Logcomex'}},
-  {y:2026,m:4,d:15,name:'LEMBRETE — Agendar ralos sacadas',sup:'Fornecedor a contratar',cls:'evt-amber',status:'s-soon',statusLabel:'Agendar',note:'Último: dez/2025. Semestral — vence junho/2026. Contratar empresa especializada.',email:{sub:'[Facilities] Agendar — Limpeza Ralos Sacadas — Jun/2026',body:'Olá,\n\nPrecisamos contratar empresa para limpeza dos ralos das sacadas (1º e 2º andares) em junho/2026.\n\nÚltimo serviço: dez/2025 — periodicidade semestral.\n\nPor favor enviar proposta e disponibilidade.\n\nAtenciosamente,\nFacilities Logcomex'}},
-  // JUNHO
-  {y:2026,m:5,d:1,name:'Agendar VRF — AC jun',sup:'VRF Engenharia',cls:'evt-amber',status:'s-soon',statusLabel:'Agendar 1ª semana',note:'Preventiva AC bimestral — data a combinar',email:{sub:'[Facilities] Agendar — Preventiva AC VRF — Jun/2026',body:'Olá,\n\nGostaria de agendar a preventiva bimestral de AC para junho/2026.\n\nFavor confirmar data.\n\nAtenciosamente,\nFacilities Logcomex'}},
-  {y:2026,m:5,d:1,name:'Agendar JB limpeza pesada',sup:'JB Facility — Limpeza',cls:'evt-amber',status:'s-soon',statusLabel:'Agendar 1ª semana',note:'Limpeza pesada bimestral — data a combinar',email:{sub:'[Facilities] Agendar — Limpeza Pesada JB — Jun/2026',body:'Olá Bruno,\n\nGostaria de agendar a limpeza pesada bimestral para junho/2026.\n\nFavor confirmar data.\n\nAtenciosamente,\nFacilities Logcomex'}},
-  {y:2026,m:5,d:1,name:'Agendar ralos sacadas',sup:'Fornecedor a contratar',cls:'evt-amber',status:'s-soon',statusLabel:'Agendar',note:'Semestral — último dez/2025. Contratar empresa especializada.',email:{sub:'[Facilities] Agendar — Limpeza Ralos Sacadas — Jun/2026',body:'Olá,\n\nPrecisamos contratar empresa para limpeza dos ralos das sacadas (1º e 2º andares) — junho/2026.\n\nÚltimo serviço: dez/2025.\n\nPor favor enviar proposta e disponibilidade.\n\nAtenciosamente,\nFacilities Logcomex'}},
-
-  {y:2026,m:5,d:8,name:'Lembrete — Dedetização 14/06',sup:'Dedetizadora exclusiva',cls:'evt-red',status:'s-urgent',statusLabel:'Confirmar presença',note:'Dedetização confirmada em 14/06 — confirmar acesso',email:{sub:'[Facilities] Lembrete — Dedetização 14/06/2026',body:'Olá,\n\nLembrete: dedetização em 14/06/2026.\n\nFavor confirmar presença e acesso.\n\nAtenciosamente,\nFacilities Logcomex'}},
-  {y:2026,m:5,d:14,name:'DEDETIZAÇÃO',sup:'Dedetizadora exclusiva',cls:'evt-red',status:'s-urgent',statusLabel:'Confirmado',note:'1º e 2º andares — data confirmada',email:{sub:'[Facilities] Dedetização — 14/06/2026',body:'Olá,\n\nConfirmação: dedetização em 14/06/2026 — 1º e 2º andares.\n\nAtenciosamente,\nFacilities Logcomex'}},
-  // JULHO
-  {y:2026,m:6,d:6,name:'Preventiva AC (VRF)',sup:'VRF Engenharia',cls:'evt-blue',status:'s-blue',statusLabel:'Preventiva',note:'Manutenção preventiva bimestral — confirmar data',email:{sub:'[Facilities] VRF — Preventiva AC Jul/2026',body:'Olá,\n\nConfirmação preventiva bimestral AC — julho/2026.\n\nFavor confirmar data.\n\nAtenciosamente,\nFacilities Logcomex'}},
-
-  {y:2026,m:6,d:20,name:'Dedetização (estim.)',sup:'Dedetizadora exclusiva',cls:'evt-red',status:'s-future',statusLabel:'Futuro · agendar',note:'Ciclo trimestral — agendar para jul/2026',email:{sub:'[Facilities] Agendar — Dedetização Jul/2026',body:'Olá,\n\nGostaria de agendar a dedetização trimestral para julho/2026.\n\nLocal: 1º e 2º andares.\n\nAtenciosamente,\nFacilities Logcomex'}},
-  {y:2026,m:6,d:27,name:'Limpeza pesada (JB)',sup:'JB Facility — Limpeza',cls:'evt-amber',status:'s-soon',statusLabel:'Bimestral',note:'Limpeza pesada bimestral — confirmar data',email:{sub:'[Facilities] JB — Limpeza Pesada Jul/2026',body:'Olá Bruno,\n\nGostaria de confirmar limpeza pesada para julho/2026.\n\nAtenciosamente,\nFacilities Logcomex'}},
-  // AGOSTO
-  {y:2026,m:7,d:3,name:'Preventiva AC (VRF)',sup:'VRF Engenharia',cls:'evt-blue',status:'s-blue',statusLabel:'Preventiva',note:'Manutenção preventiva bimestral',email:{sub:'[Facilities] VRF — Preventiva AC Ago/2026',body:'Olá,\n\nConfirmação preventiva bimestral AC — agosto/2026.\n\nAtenciosamente,\nFacilities Logcomex'}},
-  // SETEMBRO
-  {y:2026,m:8,d:14,name:'Dedetização (estim.)',sup:'Dedetizadora exclusiva',cls:'evt-red',status:'s-future',statusLabel:'Futuro · agendar',note:'Ciclo trimestral — agendar para set/2026',email:{sub:'[Facilities] Agendar — Dedetização Set/2026',body:'Olá,\n\nGostaria de agendar a dedetização trimestral para setembro/2026.\n\nAtenciosamente,\nFacilities Logcomex'}},
-  // MARÇO 2027 — Extintores
-  {y:2027,m:2,d:15,name:'Inspeção extintores',sup:'Fornecedor a contratar',cls:'evt-gray',status:'s-future',statusLabel:'Radar 2027',note:'Inspeção e recarga anual — contratar empresa especializada. Agendar em fev/2027.',email:{sub:'[Facilities] Agendar — Extintores Mar/2027',body:'Olá,\n\nPrecisamos contratar empresa para inspeção e recarga de extintores — março/2027.\n\nPor favor enviar proposta e disponibilidade.\n\nAtenciosamente,\nFacilities Logcomex'}},
-
-  // 2027 — VRF Preventiva AC bimestral: jan/mar/mai/jul/set/nov
-  {y:2027,m:0,d:5,name:'Preventiva AC (VRF)',sup:'VRF Engenharia',cls:'evt-blue',status:'s-blue',statusLabel:'Preventiva',note:'Bimestral — confirmar data',email:{sub:'[Facilities] VRF — Preventiva AC Jan/2027',body:'Olá,\n\nConfirmação preventiva bimestral AC — janeiro/2027.\n\nFavor confirmar data.\n\nAtenciosamente,\nFacilities Logcomex'}},
-  {y:2027,m:2,d:2,name:'Preventiva AC (VRF)',sup:'VRF Engenharia',cls:'evt-blue',status:'s-blue',statusLabel:'Preventiva',note:'Bimestral — confirmar data',email:{sub:'[Facilities] VRF — Preventiva AC Mar/2027',body:'Olá,\n\nConfirmação preventiva bimestral AC — março/2027.\n\nFavor confirmar data.\n\nAtenciosamente,\nFacilities Logcomex'}},
-  {y:2027,m:4,d:3,name:'Preventiva AC (VRF)',sup:'VRF Engenharia',cls:'evt-blue',status:'s-blue',statusLabel:'Preventiva',note:'Bimestral — confirmar data',email:{sub:'[Facilities] VRF — Preventiva AC Mai/2027',body:'Olá,\n\nConfirmação preventiva bimestral AC — maio/2027.\n\nFavor confirmar data.\n\nAtenciosamente,\nFacilities Logcomex'}},
-  {y:2027,m:6,d:5,name:'Preventiva AC (VRF)',sup:'VRF Engenharia',cls:'evt-blue',status:'s-blue',statusLabel:'Preventiva',note:'Bimestral — confirmar data',email:{sub:'[Facilities] VRF — Preventiva AC Jul/2027',body:'Olá,\n\nConfirmação preventiva bimestral AC — julho/2027.\n\nFavor confirmar data.\n\nAtenciosamente,\nFacilities Logcomex'}},
-  {y:2027,m:8,d:6,name:'Preventiva AC (VRF)',sup:'VRF Engenharia',cls:'evt-blue',status:'s-blue',statusLabel:'Preventiva',note:'Bimestral — confirmar data',email:{sub:'[Facilities] VRF — Preventiva AC Set/2027',body:'Olá,\n\nConfirmação preventiva bimestral AC — setembro/2027.\n\nFavor confirmar data.\n\nAtenciosamente,\nFacilities Logcomex'}},
-  {y:2027,m:10,d:1,name:'Preventiva AC (VRF)',sup:'VRF Engenharia',cls:'evt-blue',status:'s-blue',statusLabel:'Preventiva',note:'Bimestral — confirmar data',email:{sub:'[Facilities] VRF — Preventiva AC Nov/2027',body:'Olá,\n\nConfirmação preventiva bimestral AC — novembro/2027.\n\nFavor confirmar data.\n\nAtenciosamente,\nFacilities Logcomex'}},
-
-  // 2027 — JB Limpeza Pesada bimestral: jan/mar/mai/jul/set/nov
-  {y:2027,m:0,d:12,name:'Limpeza pesada (JB)',sup:'JB Facility — Limpeza',cls:'evt-amber',status:'s-soon',statusLabel:'Bimestral',note:'Limpeza pesada bimestral — confirmar data',email:{sub:'[Facilities] JB — Limpeza Pesada Jan/2027',body:'Olá Bruno,\n\nConfirmar limpeza pesada para janeiro/2027.\n\nAtenciosamente,\nFacilities Logcomex'}},
-  {y:2027,m:2,d:8,name:'Limpeza pesada (JB)',sup:'JB Facility — Limpeza',cls:'evt-amber',status:'s-soon',statusLabel:'Bimestral',note:'Limpeza pesada bimestral — confirmar data',email:{sub:'[Facilities] JB — Limpeza Pesada Mar/2027',body:'Olá Bruno,\n\nConfirmar limpeza pesada para março/2027.\n\nAtenciosamente,\nFacilities Logcomex'}},
-  {y:2027,m:4,d:10,name:'Limpeza pesada (JB)',sup:'JB Facility — Limpeza',cls:'evt-amber',status:'s-soon',statusLabel:'Bimestral',note:'Limpeza pesada bimestral — confirmar data',email:{sub:'[Facilities] JB — Limpeza Pesada Mai/2027',body:'Olá Bruno,\n\nConfirmar limpeza pesada para maio/2027.\n\nAtenciosamente,\nFacilities Logcomex'}},
-  {y:2027,m:6,d:12,name:'Limpeza pesada (JB)',sup:'JB Facility — Limpeza',cls:'evt-amber',status:'s-soon',statusLabel:'Bimestral',note:'Limpeza pesada bimestral — confirmar data',email:{sub:'[Facilities] JB — Limpeza Pesada Jul/2027',body:'Olá Bruno,\n\nConfirmar limpeza pesada para julho/2027.\n\nAtenciosamente,\nFacilities Logcomex'}},
-  {y:2027,m:8,d:13,name:'Limpeza pesada (JB)',sup:'JB Facility — Limpeza',cls:'evt-amber',status:'s-soon',statusLabel:'Bimestral',note:'Limpeza pesada bimestral — confirmar data',email:{sub:'[Facilities] JB — Limpeza Pesada Set/2027',body:'Olá Bruno,\n\nConfirmar limpeza pesada para setembro/2027.\n\nAtenciosamente,\nFacilities Logcomex'}},
-  {y:2027,m:10,d:8,name:'Limpeza pesada (JB)',sup:'JB Facility — Limpeza',cls:'evt-amber',status:'s-soon',statusLabel:'Bimestral',note:'Limpeza pesada bimestral — confirmar data',email:{sub:'[Facilities] JB — Limpeza Pesada Nov/2027',body:'Olá Bruno,\n\nConfirmar limpeza pesada para novembro/2027.\n\nAtenciosamente,\nFacilities Logcomex'}},
-
-  // 2027 — Dedetização trimestral: jan/abr/jul/out
-  {y:2027,m:0,d:19,name:'Dedetização',sup:'Dedetizadora exclusiva',cls:'evt-red',status:'s-future',statusLabel:'Agendar',note:'Trimestral — 1º e 2º andares',email:{sub:'[Facilities] Agendar — Dedetização Jan/2027',body:'Olá,\n\nAgendar dedetização trimestral para janeiro/2027.\n\n1º e 2º andares.\n\nAtenciosamente,\nFacilities Logcomex'}},
-  {y:2027,m:3,d:12,name:'Dedetização',sup:'Dedetizadora exclusiva',cls:'evt-red',status:'s-future',statusLabel:'Agendar',note:'Trimestral — 1º e 2º andares',email:{sub:'[Facilities] Agendar — Dedetização Abr/2027',body:'Olá,\n\nAgendar dedetização trimestral para abril/2027.\n\n1º e 2º andares.\n\nAtenciosamente,\nFacilities Logcomex'}},
-  {y:2027,m:6,d:19,name:'Dedetização',sup:'Dedetizadora exclusiva',cls:'evt-red',status:'s-future',statusLabel:'Agendar',note:'Trimestral — 1º e 2º andares',email:{sub:'[Facilities] Agendar — Dedetização Jul/2027',body:'Olá,\n\nAgendar dedetização trimestral para julho/2027.\n\n1º e 2º andares.\n\nAtenciosamente,\nFacilities Logcomex'}},
-  {y:2027,m:9,d:11,name:'Dedetização',sup:'Dedetizadora exclusiva',cls:'evt-red',status:'s-future',statusLabel:'Agendar',note:'Trimestral — 1º e 2º andares',email:{sub:'[Facilities] Agendar — Dedetização Out/2027',body:'Olá,\n\nAgendar dedetização trimestral para outubro/2027.\n\n1º e 2º andares.\n\nAtenciosamente,\nFacilities Logcomex'}},
-
-  // 2027 — Ralos sacadas semestral: jun/dez
-  {y:2027,m:5,d:7,name:'Limpeza ralos sacadas',sup:'Fornecedor a contratar',cls:'evt-amber',status:'s-soon',statusLabel:'Agendar',note:'Semestral — contratar empresa especializada',email:{sub:'[Facilities] Agendar — Limpeza Ralos Sacadas — Jun/2027',body:'Olá,\n\nPrecisamos contratar empresa para limpeza dos ralos das sacadas — junho/2027.\n\nPor favor enviar proposta.\n\nAtenciosamente,\nFacilities Logcomex'}},
-  {y:2027,m:11,d:6,name:'Limpeza ralos sacadas',sup:'Fornecedor a contratar',cls:'evt-amber',status:'s-soon',statusLabel:'Agendar',note:'Semestral — contratar empresa especializada',email:{sub:'[Facilities] Agendar — Limpeza Ralos Sacadas — Dez/2027',body:'Olá,\n\nPrecisamos contratar empresa para limpeza dos ralos das sacadas — dezembro/2027.\n\nPor favor enviar proposta.\n\nAtenciosamente,\nFacilities Logcomex'}},
-];
-
-// Aplica ajuste sáb→sex / dom→seg nos eventos fixos
-const fixedEvents = fixedEventsRaw.map(e=>{
-  const adj = adjustDay(e.y, e.m, e.d);
-  return adj !== e.d ? {...e, d:adj, note:(e.note?e.note+' ':'')+`(reagendado de ${e.d < adj ? 'dom' : 'sáb'} → ${e.d < adj ? 'seg' : 'sex'})`} : e;
-});
-
-// Combina eventos fixos + recorrentes gerados
-const calEvents = [...generateRecurring(), ...fixedEvents];
 
 
 function buildCal(){
@@ -1152,6 +1091,7 @@ function getEventsForDay(y,m,d){
 }
 
 buildMonthNav();
+calEvents = [...generateRecurring()];
 buildCal();
 render();
 renderCustomList();
