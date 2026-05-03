@@ -396,6 +396,73 @@ const MS=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez
 const CUR=4; // MAIO
 let selM=CUR;
 
+// ── GITHUB API CONFIG ────────────────────────────────────────
+const GH_OWNER   = 'facilities-logcomex';
+const GH_REPO    = 'Facilities-';
+const GH_FILE    = 'eventos.json';
+let fixedEventsRaw = [];
+
+function getGHToken(){
+  let token = localStorage.getItem('gh_token_facilities');
+  if(!token){
+    token = prompt('Cole o token do GitHub para sincronizar eventos:');
+    if(token) localStorage.setItem('gh_token_facilities', token.trim());
+  }
+  return token ? token.trim() : null;
+}
+
+async function carregarEventos(){
+  const token = getGHToken();
+  if(!token) return;
+  try {
+    const res = await fetch(
+      `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_FILE}`,
+      { headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json' } }
+    );
+    const data = await res.json();
+    const content = JSON.parse(atob(data.content.replace(/\n/g,'')));
+    fixedEventsRaw = content.eventos_fixos || [];
+    fixedEvents = fixedEventsRaw.map(e=>{
+      const adj = adjustDay(e.y, e.m, e.d);
+      return adj !== e.d ? {...e, d:adj} : e;
+    });
+    calEvents = [...generateRecurring(), ...fixedEvents];
+    buildCal();
+    console.log('✅ Eventos carregados do GitHub:', fixedEventsRaw.length);
+  } catch(err) {
+    console.warn('⚠️ Usando eventos locais (fallback):', err);
+  }
+}
+
+async function salvarEventosNoGitHub(novosEventos){
+  const token = getGHToken();
+  if(!token) return;
+  try {
+    const res = await fetch(
+      `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_FILE}`,
+      { headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json' } }
+    );
+    const data = await res.json();
+    const sha = data.sha;
+    const content = {
+      config: { repo_owner: GH_OWNER, repo_name: GH_REPO, updated_at: new Date().toISOString().split('T')[0] },
+      eventos_fixos: novosEventos
+    };
+    const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(content, null, 2))));
+    await fetch(
+      `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_FILE}`,
+      {
+        method: 'PUT',
+        headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: 'Atualizar eventos.json via painel', content: encoded, sha })
+      }
+    );
+    console.log('✅ eventos.json salvo no GitHub!');
+  } catch(err) {
+    console.error('❌ Erro ao salvar no GitHub:', err);
+  }
+}
+
 function showTab(id, btn){
   document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
@@ -958,6 +1025,11 @@ function salvarEvento(){
   evts.push(evt);
   saveCustomEvents(evts);
 
+  // Salva também no GitHub como evento fixo
+  const novoFixo = { y, m, d, name:nome, sup:resp||'Equipe interna', cls: catConfig(cat,prio).cls, status: catConfig(cat,prio).status, statusLabel: catConfig(cat,prio).statusLabel, note:nota };
+  const todosFixos = [...fixedEventsRaw, novoFixo];
+  salvarEventosNoGitHub(todosFixos);
+
   if(comEmail){
     const dateStr = `${String(d).padStart(2,'0')}/${String(m+1).padStart(2,'0')}/${y}`;
     const subject = formatEmailSubject(nome, dateStr);
@@ -1044,6 +1116,7 @@ buildMonthNav();
 buildCal();
 render();
 renderCustomList();
+carregarEventos(); // carrega eventos atualizados do GitHub
 </script>
 </body>
 </html>
